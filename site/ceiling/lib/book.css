@@ -1,0 +1,24 @@
+/* This book's own settings and overrides. Imported by engine.css, before the engine's rules;
+   use :root:root to outrank the engine's :root. */
+:root:root {
+  --page: #0b1210;
+  --board: #0f1a16;
+  --panel: #15231e;
+  --edge: #2c4038;
+  --chalk: #f2efe6;
+  --dim: #9fb0a8;
+  --faint: #5d7068;
+  --task: #e5a33d;
+  --quiz: #3d8be5;
+  --good: #4caf7d;
+  --bad: #e5533d;
+  --math-font: "STIX Two Text", "Cambria Math", "Iowan Old Style", Palatino, Georgia, serif;
+}
+
+/* Code inside cards and options. */
+.card code, .opt code, .card pre.code {
+  font: 500 0.84em/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--chalk);
+  white-space: pre-wrap;
+}
+.card pre.code { margin: 10px 0 4px; }
