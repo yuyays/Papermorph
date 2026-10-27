@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Ladder</title>
+<link rel="stylesheet" href="../lib/engine.css">
+<link rel="expect" href="#bar" blocking="render">
+</head>
+<body>
+<script src="../lib/engine.js"></script>
+<script src="../lib/theory.js"></script>
+<script src="audio/en/timings.js"></script>
+<script>
+'use strict';
+const CHAPTER = { number: 1, title: 'The Ladder', minutes: 7, language: 'en' };
+
+const PW = Th.POWER, CS = Th.COST, TR = Th.TRUST, AL = Th.ALARM, DM = Th.DIM, IN = Th.INK;
+
+function chip(p, str, x, y, { w = 140, h = 54, color = DM, size = 28, o = 1, mono = false } = {}) {
+  const g = G(p, { o, x, y });
+  mk('rect', { x: -w / 2, y: -h / 2, width: w, height: h, rx: 10, fill: 'none', stroke: color, 'stroke-width': 3 }, g);
+  T(g, str, { x: 0, y: size * .36, size, fill: color, anchor: 'middle', font: mono ? Th.MONO : undefined, weight: 600 });
+  return g;
+}
+
+function state(p, name, x, y, color = PW) {
+  const g = G(p, { o: 0 });
+  mk('circle', { cx: x, cy: y, r: 44, fill: 'none', stroke: color, 'stroke-width': 3 }, g);
+  T(g, name, { x, y: y + 9, size: 26, fill: color, anchor: 'middle', font: Th.MONO });
+  return g;
+}
+
+const BEATS = [
+  ['intro', 'The Ladder', (m, D) => {
+    const p = panel(0);
+    Th.label(p, 'Chapter one', 120, 232, { size: 30, fill: DM, weight: 600 });
+    const title = Th.label(p, 'The Ladder', 120, 360, { size: 92, weight: 600, o: 0 });
+    const sub = Th.label(p, 'Power is a resource. Every rung adds memory.', 120, 440, { size: 34, fill: DM, o: 0 });
+    show(title, m('title'), .7); show(sub, m('title', 1.1), .7);
+    const st = Th.stair(p, { x: 140, y: 800, n: 6, w: 120, h: 52, color: PW, o: 0 });
+    tw(st.g, { o: .8 }, .3, .8);
+    st.steps.forEach((s, i) => draw(s, .4 + i * .1, .45));
+  }],
+
+  ['b_language', 'A language with a count', (m, D) => {
+    const p = panel(0);
+    Th.label(p, 'some number of a’s, then the same number of b’s', 120, 180, { size: 30, fill: DM });
+    [['ab', 300], ['aabb', 540], ['aaabbb', 820]].forEach(([s, x], i) => {
+      const c = chip(p, s, x, 280, { w: 150, h: 58, color: PW, size: 28, o: 0 });
+      tw(c, { o: 1 }, m('strings', i * .15), .4);
+    });
+    M(p, ['a', E('n'), 'b', E('n')], { x: 1240, y: 300, size: 48, fill: IN });
+    // a finite machine: three states and a loop
+    const q0 = state(p, 'q0', 380, 540), q1 = state(p, 'q1', 640, 540), q2 = state(p, 'q2', 900, 540);
+    [q0, q1, q2].forEach((q, i) => tw(q, { o: 1 }, .5 + i * .15, .45));
+    draw(Th.arrow(p, 424, 540, 592, 540, { color: DM }), .8, .4);
+    draw(Th.arrow(p, 684, 540, 852, 540, { color: DM }), .95, .4);
+    const loop = path(p, 'M600 496C600 420 680 420 680 496', { stroke: CS, 'stroke-width': 3 }, { d: 0 });
+    draw(loop, 1.1, .6);
+    T(p, 'a', { x: 640, y: 430, size: 24, fill: CS, anchor: 'middle' });
+    T(p, 'finite states', { x: 640, y: 640, size: 26, fill: DM, anchor: 'middle' });
+    Th.label(p, 'no auxiliary memory', 120, 720, { size: 32, fill: AL });
+  }],
+
+  ['b_pumping', 'The pumping lemma', (m, D) => {
+    const p = panel(0);
+    Th.label(p, 'a finite machine must revisit a state', 120, 180, { size: 30, fill: DM });
+    const xs = [220, 310, 400, 490, 580, 670];
+    xs.forEach((x, i) => chip(p, 'a', x, 320, { w: 64, h: 50, color: PW, size: 26 }));
+    const br = G(p, { o: 0 });
+    path(br, 'M260 250H440', { stroke: CS, 'stroke-width': 3 }, { d: 1 });
+    path(br, 'M260 250V266M440 250V266', { stroke: CS, 'stroke-width': 3 }, { d: 1 });
+    T(br, 'loop', { x: 350, y: 232, size: 24, fill: CS, anchor: 'middle' });
+    show(br, m('loop'), .5);
+    const extra = [['a', 760], ['a', 850]].map(([s, x]) => chip(p, s, x, 320, { w: 64, h: 50, color: AL, size: 26, o: 0 }));
+    extra.forEach((c, i) => tw(c, { o: 1 }, m('pump', i * .2), .4));
+    const bad = chip(p, 'b b b', 1180, 320, { w: 160, h: 50, color: AL, size: 26, o: 0 });
+    tw(bad, { o: 1 }, m('pump', .5), .4);
+    Th.label(p, 'pump the loop, and the count breaks', 120, 560, { size: 30, fill: DM });
+    const concl = Th.label(p, 'the language is not regular', 120, 660, { size: 34, fill: AL, o: 0 });
+    show(concl, m('pump', 1.1), .5);
+  }],
+
+  ['b_dial', 'The memory dial', (m, D) => {
+    const p = panel(0);
+    Th.label(p, 'the memory dial', 120, 180, { size: 30, fill: DM });
+    const d = Th.dial(p, { x: 220, y: 660, w: 1160, o: 0 });
+    tw(d.g, { o: 1 }, m('dial'), .4);
+    tw(d.knob, { x: d.xs[1] }, m('dial', .5), .7);
+    tw(d.knob, { x: d.xs[2] }, m('dial', 1.6), .7);
+    [['DFA', 220, PW], ['PDA', 800, TR], ['TM', 1380, CS]].forEach(([s, x, col], i) => {
+      const c = chip(p, s, x, 500, { w: 160, h: 60, color: col, size: 28, o: 0 });
+      tw(c, { o: 1 }, m('dial', i * .55), .4);
+    });
+    Th.label(p, 'each stop is a theorem', 800, 800, { size: 28, fill: DM, anchor: 'middle' });
+  }],
+
+  ['b_stack', 'One stack', (m, D) => {
+    const p = panel(0);
+    Th.label(p, 'add one stack', 120, 180, { size: 30, fill: DM });
+    ['a', 'a', 'b', 'b'].forEach((s, i) => chip(p, s, 260 + i * 92, 280, { w: 70, h: 52, color: PW, size: 28 }));
+    T(p, 'S -> a S b | ε', { x: 680, y: 292, size: 34, font: Th.MONO, fill: DM });
+    T(p, 'a-phase → b-phase', { x: 680, y: 360, size: 22, fill: DM });
+    const base = path(p, 'M980 640H1120', { stroke: DM, 'stroke-width': 4 }, { d: 0 });
+    draw(base, .3, .4);
+    const m1 = chip(p, 'a', 1050, 580, { w: 70, h: 46, color: TR, size: 26, o: 0 });
+    const m2 = chip(p, 'a', 1050, 520, { w: 70, h: 46, color: TR, size: 26, o: 0 });
+    tw(m1, { o: 1 }, m('push'), .4); tw(m2, { o: 1 }, m('push', .2), .4);
+    tw(m1, { o: 0 }, m('accept'), .4); tw(m2, { o: 0 }, m('accept', .1), .4);
+    const ck = Th.check(p, 1145, 565, { color: TR, size: 46 });
+    tw(ck, { o: 1, s: 1 }, m('accept', .7), .4, back);
+    T(p, 'empty: accept', { x: 1050, y: 690, size: 26, fill: TR, anchor: 'middle' });
+    Th.label(p, 'one stack counts as high as the input is long', 120, 760, { size: 28, fill: TR });
+  }],
+
+  ['q1', 'Quick check', (m) => {
+    const p = panel(0);
+    const st = Th.stair(p, { x: 160, y: 600, n: 5, w: 92, h: 46, color: PW, o: 0 });
+    tw(st.g, { o: .35 }, .2, .5);
+    st.steps.forEach((s, i) => draw(s, .25 + i * .08, .4));
+    const q = T(p, 'which one needs memory?', { x: 160, y: 250, size: 28, fill: DM, o: 0 });
+    show(q, .3);
+  }, { ask: done => quiz(BAND, [{
+    id: 'c-stack',
+    prompt: ['Which language needs a stack?'],
+    build: choice([
+      $m('a', E('n'), 'b', E('n')),
+      h('code', '', 'a*'),
+      'strings with an even number of a’s',
+    ], 0, 'The machine must remember how many a’s it saw, then match that many b’s.',
+      ['Any number of a’s is regular: no count to remember.', 'Parity is one bit: two states are enough.']),
+  }], done) }],
+
+  ['b_two', 'Two stacks', (m, D) => {
+    const p = panel(0);
+    Th.label(p, 'two stacks, three counts', 120, 180, { size: 30, fill: DM });
+    ['a', 'a', 'b', 'b', 'c', 'c'].forEach((s, i) => chip(p, s, 200 + i * 80, 270, { w: 62, h: 50, color: PW, size: 26 }));
+    M(p, ['a', E('n'), 'b', E('n'), 'c', E('n')], { x: 1240, y: 290, size: 44 });
+    const one = chip(p, '1 stack', 820, 440, { w: 150, h: 54, color: AL, size: 24, o: 0 });
+    tw(one, { o: 1 }, m('three'), .4);
+    const no = T(p, '✗', { x: 1000, y: 452, size: 34, fill: AL, anchor: 'middle', o: 0 });
+    show(no, m('three', .4), .4);
+    const two1 = chip(p, 'a a', 1080, 440, { w: 100, h: 48, color: TR, size: 24, o: 0 });
+    const two2 = chip(p, 'b b', 1230, 440, { w: 100, h: 48, color: CS, size: 24, o: 0 });
+    tw(two1, { o: 1 }, m('two'), .4); tw(two2, { o: 1 }, m('two', .2), .4);
+    Th.label(p, 'one stack cannot keep two counts', 120, 600, { size: 30, fill: DM });
+    Th.label(p, 'the second stack is the extra counter', 120, 660, { size: 30, fill: TR });
+  }],
+
+  ['b_tape', 'Two stacks are a tape', (m, D) => {
+    const p = panel(0);
+    Th.label(p, 'two stacks are a tape', 120, 180, { size: 30, fill: DM });
+    const left = ['a', 'a', 'b'];
+    left.forEach((s, i) => chip(p, s, 360 + i * 80, 380, { w: 62, h: 56, color: PW, size: 26 }));
+    const right = ['b', 'b', 'b'];
+    right.forEach((s, i) => chip(p, s, 820 + i * 80, 380, { w: 62, h: 56, color: CS, size: 26 }));
+    T(p, 'head', { x: 660, y: 310, size: 24, fill: TR, anchor: 'middle' });
+    const cut = path(p, 'M680 320V450', { stroke: TR, 'stroke-width': 4, 'stroke-dasharray': '8 8' }, { d: 0 });
+    draw(cut, m('split'), .5);
+    T(p, 'left stack', { x: 520, y: 520, size: 24, fill: PW, anchor: 'middle' });
+    T(p, 'right stack', { x: 940, y: 520, size: 24, fill: CS, anchor: 'middle' });
+    const moved = chip(p, 'b', 720, 380, { w: 62, h: 56, color: TR, size: 26, o: 0 });
+    tw(moved, { o: 1 }, m('move'), .4);
+    Th.label(p, 'one pop, one push, one write', 120, 650, { size: 30, fill: TR });
+    Th.label(p, 'two stacks and a tape are the same machine', 120, 710, { size: 28, fill: DM });
+  }],
+
+  ['b_church', 'The top is a plateau', (m, D) => {
+    const p = panel(0);
+    Th.label(p, 'the top is a plateau', 120, 180, { size: 30, fill: DM });
+    const models = [['Turing machine', 200, 360], ['untyped lambda calculus', 550, 360], ['recursive functions', 900, 360], ['register machine', 1250, 360]];
+    models.forEach(([s, x, y], i) => {
+      const g = G(p, { x, y, o: 0 });
+      mk('rect', { x: 0, y: 0, width: 260, height: 100, rx: 14, fill: 'none', stroke: DM, 'stroke-width': 3 }, g);
+      T(g, s, { x: 130, y: 60, size: 22, fill: IN, anchor: 'middle' });
+      tw(g, { o: 1 }, m('plateau', i * .15), .45);
+    });
+    draw(path(p, 'M200 300H1510', { stroke: TR, 'stroke-width': 5 }, { d: 0 }), m('plateau', .7), .7);
+    T(p, 'same power', { x: 800, y: 270, size: 30, fill: TR, anchor: 'middle' });
+    Th.label(p, 'every reasonable model lands here', 120, 620, { size: 30, fill: TR });
+    Th.label(p, 'the Church-Turing thesis', 120, 680, { size: 28, fill: DM });
+  }],
+
+  ['b_cost', 'Power is not cost', (m, D) => {
+    const p = panel(0);
+    Th.label(p, 'power is not cost', 120, 180, { size: 30, fill: DM });
+    T(p, 'power', { x: 120, y: 340, size: 28, fill: PW });
+    mk('rect', { x: 260, y: 310, width: 1000, height: 42, rx: 8, fill: PW, opacity: .28 }, p);
+    mk('rect', { x: 260, y: 310, width: 1000, height: 42, rx: 8, fill: PW, opacity: .55 }, p);
+    T(p, 'cost', { x: 120, y: 460, size: 28, fill: CS });
+    mk('rect', { x: 260, y: 430, width: 620, height: 42, rx: 8, fill: CS, opacity: .5 }, p);
+    const slower = T(p, 'same language, more overhead', { x: 260, y: 540, size: 26, fill: DM, o: 0 });
+    show(slower, m('cost', .4), .5);
+    const note = T(p, 'on this dial, memory buys languages, not speed', { x: 120, y: 680, size: 32, fill: TR, o: 0 });
+    show(note, m('cost'), .5);
+  }],
+
+  ['b_bend', 'Where Bend stands', (m, D) => {
+    const p = panel(0);
+    Th.label(p, 'where Bend stands', 120, 180, { size: 30, fill: DM });
+    const d = Th.dial(p, { x: 220, y: 620, w: 1160, o: 0 });
+    tw(d.g, { o: 1 }, .3, .5);
+    const sx = (d.xs[1] + d.xs[2]) / 2;
+    tw(d.knob, { x: sx }, m('bend'), .7);
+    T(p, 'safe fragment', { x: sx, y: 540, size: 22, fill: TR, anchor: 'middle' });
+    T(p, 'Turing-complete', { x: d.xs[2], y: 540, size: 22, fill: AL, anchor: 'middle' });
+    Th.label(p, 'it gives up non-terminating programs, not memory', 120, 760, { size: 30, fill: TR });
+    Th.label(p, 'the ceiling is not the goal', 120, 810, { size: 28, fill: DM });
+    T(p, 'the knob is schematic', { x: 120, y: 850, size: 18, fill: DM });
+  }],
+
+  ['wrap', 'Three things to keep', (m) => {
+    const p = panel(0);
+    const rows = [
+      ['Power is a resource.', 'one', PW],
+      ['Add memory, gain languages.', 'two', TR],
+      ['The top is a plateau, and the plateau is not the goal.', 'three', CS],
+    ];
+    rows.forEach(([str, mark, col], i) => {
+      const g = G(p, { x: -18, y: 280 + i * 150, o: 0 });
+      mk('circle', { cx: 180, cy: -12, r: 30, fill: col }, g);
+      T(g, String(i + 1), { x: 180, y: 0, size: 34, fill: '#0f1a16', weight: 700, anchor: 'middle' });
+      T(g, str, { x: 250, size: 34, weight: 600 });
+      tw(g, { o: 1, x: 0 }, m(mark), .55);
+    });
+  }],
+
+  ['finish', 'Finished', () => { panel(0); }, { ask: finishCard }],
+].map(([id, title, run, extra]) => ({ id, title, run, ...extra }));
+
+boot();
+</script>
+</body>
+</html>
